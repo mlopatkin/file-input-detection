@@ -1,0 +1,35 @@
+apply plugin: JavaProjectPlugin
+apply plugin: "test-kotlin-plugin"
+
+def detectedInputs() {
+    // Calling new FileInputStream(File) in Groovy build script is detected as a configuration cache input.
+    Utils.printAndClose("inputGroovy1.txt", new FileInputStream(file("inputGroovy1.txt")))
+
+    // Calling new FileInputStream(String) in Groovy build script is detected as a configuration cache input.
+    Utils.printAndClose("inputGroovy2.txt", new FileInputStream(file("inputGroovy2.txt").getPath()))
+}
+
+
+def undetectedInputs() {
+    // FileReader isn't detected as input
+    Utils.printAndClose("undetected.txt", new FileReader(file("undetected.txt")))
+
+    // Groovy extension functions aren't detected as inputs.
+    Utils.printAndClose("undetected.txt", file("undetected.txt").newInputStream())
+    Utils.printAndClose("undetected.txt", file("undetected.txt").newReader())
+    file("undetected.txt").withInputStream {
+        Utils.print("undetected.txt", it)
+    }
+    file("undetected.txt").withReader {
+        Utils.print("undetected.txt", it)
+    }
+
+    // Groovy helpers aren't detected as inputs
+    println(new String(file("undetected.txt").readBytes()))
+    println(new String(file("undetected.txt").bytes))
+    println(file("undetected.txt").text)
+    println(file("undetected.txt").readLines().join(""))
+}
+
+detectedInputs()
+undetectedInputs()
